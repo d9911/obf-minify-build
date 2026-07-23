@@ -1,140 +1,72 @@
-# obf-minify-build Documentation
+# API and configuration
 
-## API Reference
+## `build(options)`
 
-### `build(options)`
-
-Main function for building projects with minification and obfuscation.
-
-#### Parameters
-
-- `options` (Object): Configuration options
-  - `src` (string): Source directory path (default: 'src')
-  - `out` (string): Output directory path (default: 'build')
-  - `make` (boolean): Use Makefile if available (default: true)
-
-#### Example
-
-```javascript
+```js
 import { build } from 'obf-minify-build';
 
-// Basic usage
-build();
-
-// With custom options
-build({
-  src: 'source',
-  out: 'dist',
-  make: false
-});
+const result = await build(options);
 ```
 
-## Configuration
+`build()` is asynchronous and rejects with an `Error` for invalid input.
 
-### Makefile Configuration
+| Option               | Type       | Default         | Meaning                                            |
+| -------------------- | ---------- | --------------- | -------------------------------------------------- |
+| `src`                | `string`   | `"src"`         | Source directory relative to the working directory |
+| `out`                | `string`   | `"build"`       | Output directory relative to the working directory |
+| `inlineCss`          | `boolean`  | `false`         | Inline local stylesheet references                 |
+| `inlineJs`           | `boolean`  | `false`         | Inline local external scripts                      |
+| `inlineAll`          | `boolean`  | `false`         | Enable both inline modes                           |
+| `generateIndex`      | `boolean`  | `false`         | Create a basic English index when no HTML exists   |
+| `skipObfuscation`    | `boolean`  | `false`         | Preserve all JavaScript source                     |
+| `skipObfuscationFor` | `string[]` | `[]`            | Preserve matching JavaScript paths                 |
+| `cwd`                | `string`   | `process.cwd()` | Base for paths and `obfuscator.json`               |
 
-The project uses a Makefile for build automation. Key variables in `config.mk`:
+The result contains absolute directories, file counts, a source-to-output
+manifest, and non-fatal warnings. See the primary [README](../README.md) for the
+complete shape.
 
-- `SRC_DIR`: Source directory (default: src)
-- `BUILD_DIR`: Output directory (default: build)
-- `IGNORE_CSS`: CSS files to ignore during minification
-- `IGNORE_HTML`: HTML files to ignore during minification
-- `IGNORE_JS`: JS files to ignore during obfuscation
+## Safety rules
 
-### Obfuscation Settings
+The source must exist and be a directory. Source and output cannot be equal,
+nested inside one another, or arranged so that deleting old output could delete
+source files.
 
-JavaScript obfuscation is configured in `obfuscator.json`:
+The output directory is recreated after validation. The source is never modified.
 
-```json
-{
-  "compact": true,
-  "controlFlowFlattening": true,
-  "controlFlowFlatteningThreshold": 1,
-  "deadCodeInjection": true,
-  "deadCodeInjectionThreshold": 1,
-  "debugProtection": true,
-  "debugProtectionInterval": true,
-  "disableConsoleOutput": true,
-  "identifierNamesGenerator": "hexadecimal",
-  "log": false,
-  "renameGlobals": true,
-  "rotateStringArray": true,
-  "selfDefending": true,
-  "stringArray": true,
-  "stringArrayEncoding": "base64",
-  "stringArrayThreshold": 1,
-  "transformObjectKeys": true
-}
-```
+## Transform order
 
-## Build Process
+1. Discover source files.
+2. Transform CSS and JavaScript.
+3. Optionally inline local CSS/JavaScript references.
+4. Minify HTML.
+5. Write output.
+6. Hash emitted CSS, JavaScript, and supported images with SHA-256.
+7. Rename hashed files and rewrite local `src`/`href` references.
 
-1. **Clean**: Remove previous build directory
-2. **Copy**: Copy source files to build directory
-3. **Minify CSS**: Minify CSS files using clean-css
-4. **Minify HTML**: Minify HTML files using html-minifier
-5. **Obfuscate JS**: Obfuscate JavaScript files
-6. **Obfuscate HTML inline**: Process inline scripts in HTML
-7. **Hash assets**: Add content hashes to asset filenames
+The filename uses the first eight lowercase hexadecimal characters of the
+SHA-256 digest.
 
-## File Structure
+## Local and remote references
 
-```
-src/
-├── html/          # HTML files
-├── css/           # CSS files
-├── js/            # JavaScript files
-├── assets/        # Static assets (images, etc.)
-└── resources/     # Additional resources
-```
+Relative paths are local. `http:`, `https:`, other URI schemes, `//`, `data:`,
+and fragment-only references are not opened as files. Missing local references
+requested for inlining remain in HTML and are reported in `result.warnings`.
 
-## CLI Usage
+## `obfuscator.json`
+
+The engine reads this optional file from `cwd`. Invalid JSON stops the build with
+an actionable error. Options are passed to `javascript-obfuscator`; consult its
+upstream documentation for supported fields.
+
+Obfuscation is not encryption and is not a safe place for credentials.
+
+## Make
+
+`Makefile` is an optional wrapper around:
 
 ```bash
-# Basic build (uses Makefile)
-npx obf-minify-build
-
-# Custom source and output directories
-npx obf-minify-build --src source --out dist
-
-# Use Node.js build instead of Makefile
-npx obf-minify-build --no-make
-
-# Combine custom paths with Node.js build
-npx obf-minify-build --src source --out dist --no-make
-
-# Show help
-npx obf-minify-build --help
+node bin/cli.js --src "$SRC_DIR" --out "$BUILD_DIR"
 ```
 
-### CLI Parameters
-
-- `--src <dir>` - Source directory (default: `src`)
-- `--out <dir>` - Output directory (default: `build`)
-- `--no-make` - Use Node.js build instead of Makefile
-- `--help, -h` - Show help information
-
-### Build Methods
-
-1. **Makefile Build** (default): Uses system Makefile for maximum performance
-   - Requires: `make`, `cpio`, `find`
-   - Best for: Production builds, CI/CD
-
-2. **Node.js Build**: Pure JavaScript implementation
-   - Requires: Only Node.js
-   - Best for: Cross-platform compatibility, custom configurations
-
-## Protection Features
-
-The build includes client-side protection mechanisms:
-
-- **protection.js**: Anti-debugging and tampering protection
-- **protection.css**: CSS-based protection against inspection
-- **Asset hashing**: Prevents cache issues and adds security
-- **Code obfuscation**: Makes reverse engineering difficult
-
-## Requirements
-
-- Node.js >= 18
-- Linux/macOS/WSL (for Makefile support)
-- Required tools: cpio, find, make
+It does not provide a separate build mode.

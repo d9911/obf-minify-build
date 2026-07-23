@@ -6,6 +6,7 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
 }
+
 /* 2) Скрыть outline для ссылок */
 a:focus {
   outline: none;

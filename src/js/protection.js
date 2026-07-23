@@ -1,3 +1,5 @@
+/* global window, self, top, document */
+
 // Проверяем, не находимся ли мы в режиме разработки (например, на localhost)
 const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Анти-фрейм

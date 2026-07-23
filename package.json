@@ -1,7 +1,7 @@
 {
   "name": "obf-minify-build",
   "version": "0.0.4-rc.3",
-  "description": "Автоматизированная сборка фронтенда с минификацией, обфускацией и защитами. CLI и API.",
+  "description": "Cross-platform static frontend builds with minification, obfuscation, inlining, and hashed assets.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -37,47 +37,52 @@
       "url": "https://t.me/d9911/"
     }
   ],
-	"license": "GPL-3.0-only-or-later",
+  "license": "GPL-3.0-only",
   "files": [
+    "README.md",
+    "README.ru.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs/README.md",
+    "docs/EXAMPLES.md",
+    "docs/TESTING.md",
+    "docs/TROUBLESHOOTING.md",
     "lib/",
     "bin/",
-    "scripts/",
     "config.mk",
     "Makefile",
-    "obfuscator.json",
-    ".eslintrc",
-    ".stylelintrc",
-    ".htmlhintrc"
+    "obfuscator.json"
   ],
-  "peerDependencies": {
-    "glob": "^11.0.3",
-    "replace-in-file": "^8.3.0",
-    "javascript-obfuscator": "^4.1.1",
+  "dependencies": {
+    "clean-css": "^5.3.3",
     "html-minifier-terser": "^7.2.0",
-    "clean-css": "^5.3.3"
+    "javascript-obfuscator": "^5.4.3"
   },
   "devDependencies": {
-    "html-minifier-terser": "^7.2.0",
-    "javascript-obfuscator": "^4.1.1",
-    "clean-css-cli": "^5.6.3",
-    "postcss-cli": "^11.0.1",
+    "@eslint/js": "^9.32.0",
     "autoprefixer": "^10.4.21",
+    "clean-css-cli": "^5.6.3",
     "cssnano": "^7.1.0",
     "eslint": "^9.32.0",
-    "@eslint/js": "^9.32.0",
+    "glob": "^10.4.5",
     "globals": "^16.3.0",
-    "stylelint": "^16.22.0",
     "htmlhint": "^1.6.3",
     "onchange": "^7.1.0",
-    "glob": "^11.0.3",
-    "replace-in-file": "^8.3.0"
+    "postcss-cli": "^11.0.1",
+    "replace-in-file": "^8.3.0",
+    "stylelint": "^16.22.0",
+    "stylelint-config-standard": "^38.0.0"
   },
   "scripts": {
-    "build": "make all",
+    "build": "node bin/cli.js",
     "dev": "onchange 'src/**/*' -- npm run build",
-    "start": "npm run build && live-server build",
-    "test": "./test-all.sh",
-    "test:cli": "npx obf-minify-build --help"
+    "test": "node --test test/*.test.js",
+    "test:cli": "node --test test/cli.test.js",
+    "test:package": "node --test test/package.test.js",
+    "lint": "eslint bin lib scripts test src/js && stylelint \"src/css/**/*.css\" && htmlhint src/html"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "browserslist": [
     ">0.25%",
