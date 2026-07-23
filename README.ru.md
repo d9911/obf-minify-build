@@ -1,8 +1,8 @@
 # obf-minify-build
 
 <p align="center">
-  Кроссплатформенная сборка статического фронтенда: минификация HTML/CSS,
-  обфускация JavaScript, встраивание ресурсов и хеширование имён файлов.
+  Кроссплатформенная сборка без runtime-зависимостей: TypeScript,
+  консервативная минификация, встраивание ресурсов и хеширование файлов.
 </p>
 
 <p align="center">
@@ -26,8 +26,10 @@
 
 - один Node.js-движок для CLI и JavaScript API;
 - работа в Windows, macOS и Linux без обязательных системных утилит;
-- минификация HTML и CSS;
-- настраиваемая обфускация JavaScript;
+- отсутствие сторонних runtime-зависимостей;
+- консервативная минификация HTML и CSS;
+- собственная минификация и безопасная базовая обфускация JavaScript;
+- необязательная компиляция TypeScript с приоритетом `.ts`;
 - необязательное встраивание локальных CSS и JavaScript;
 - content hash в именах CSS, JavaScript и изображений;
 - автоматическое обновление локальных ссылок в HTML;
@@ -51,7 +53,7 @@ npm install --save-dev obf-minify-build@rc
 
 ```bash
 npm pack
-npm install --save-dev ./obf-minify-build-0.0.4-rc.3.tgz
+npm install --save-dev ./obf-minify-build-0.0.4-rc.4.tgz
 ```
 
 ## Быстрый старт
@@ -79,6 +81,19 @@ npx obf-minify-build --src src --out dist
 изображения получат восьмизначный content hash, а соответствующие ссылки в HTML
 будут обновлены.
 
+### Необязательный TypeScript
+
+Для проекта с `.ts` установите TypeScript:
+
+```bash
+npm install --save-dev typescript
+```
+
+`js/app.ts` компилируется в `js/app.js`. Если существуют оба файла, выбирается
+`.ts`. Для JavaScript-проекта TypeScript не нужен. В этой версии не
+поддерживается `.tsx`, не создаются `.d.ts`, а полную проверку типов следует
+выполнять отдельно командой `tsc --noEmit`.
+
 ## CLI
 
 ```text
@@ -91,8 +106,8 @@ npx obf-minify-build --src src --out dist
   --inline-js                    Встроить локальные JavaScript в HTML
   --inline-all                   Встроить локальные CSS и JavaScript
   --generate-index               Создать index.html при отсутствии HTML
-  --skip-obfuscation             Не обфусцировать JavaScript
-  --skip-obfuscation-for <list>  Исключения через запятую
+  --skip-obfuscation             Устаревший параметр без эффекта
+  --skip-obfuscation-for <list>  Устаревший параметр без эффекта
   --no-make                      Устаревший совместимый параметр без эффекта
   --version, -v                  Показать версию
   --help, -h                     Показать справку
@@ -110,8 +125,6 @@ npx obf-minify-build --src website --out public
 # Встроить локальные CSS и JavaScript в HTML
 npx obf-minify-build --inline-all
 
-# Не обфусцировать сторонние библиотеки
-npx obf-minify-build --skip-obfuscation-for vendor.js,libs/
 ```
 
 Неизвестные параметры, отсутствующие значения, неверные пути и ошибки сборки
@@ -128,7 +141,6 @@ try {
   const result = await build({
     src: 'src',
     out: 'dist',
-    skipObfuscationFor: ['vendor.js'],
   });
 
   console.log(result.outputDir);
@@ -162,24 +174,31 @@ try {
 }
 ```
 
-## Настройка обфускатора
+## Политика зависимостей
 
-Создайте `obfuscator.json` в каталоге, из которого запускается сборка. Параметры
-передаются в
-[`javascript-obfuscator`](https://github.com/javascript-obfuscator/javascript-obfuscator).
-Если файла нет, применяется консервативная встроенная конфигурация.
+У опубликованного пакета нет production `dependencies`. TypeScript объявлен
+необязательной peer-зависимостью и загружается только при наличии выбранных
+`.ts`-файлов. Инструменты разработки не устанавливаются пользователям пакета.
+
+## Настройка собственного движка
+
+Движок написан в рамках проекта с нуля: исходники удалённых сторонних
+обработчиков не копируются и не встраиваются. Для изменения стандартных
+настроек создайте `obfuscator.json` в рабочем каталоге:
 
 ```json
 {
   "compact": true,
-  "controlFlowFlattening": false,
-  "deadCodeInjection": false,
-  "renameGlobals": false,
-  "selfDefending": false,
-  "stringArray": true,
-  "stringArrayThreshold": 0.75
+  "removeComments": true,
+  "encodeStrings": true,
+  "renameLocals": true
 }
 ```
+
+Поддерживаются только эти boolean-параметры. Движок может кодировать строки и
+переименовывать только доказанно локальные имена. Глобальные имена, свойства,
+модули и директивы сохраняются. При неоднозначном синтаксисе исходный файл
+попадает в сборку без изменений, а причина записывается в `warnings`.
 
 ## Необязательный Makefile
 
@@ -193,6 +212,26 @@ make clean
 
 Makefile вызывает тот же Node.js CLI и не содержит отдельной реализации сборки.
 
+## Проверка в настоящем браузере
+
+Браузерный E2E-тест устанавливает именно архив `npm pack` в изолированный
+consumer-проект. Затем он собирает многомодульное Vanilla TypeScript SPA и
+открывает результат в Chromium:
+
+```bash
+# Один раз установите браузер для локальной разработки
+npx playwright install chromium
+
+# Упакуйте, установите, соберите, запустите и проверьте SPA
+npm run test:e2e
+```
+
+Тест проверяет статические и динамические ES-module imports, CSS `@import` и
+`url()`, хешированные изображения, загрузку JSON, DOM-события, `localStorage`,
+HTTP-ответы, необработанные ошибки страницы и ошибки browser console.
+Playwright используется только при разработке и не является
+runtime-зависимостью опубликованного пакета.
+
 ## Требования и проверенная поддержка
 
 - Заявленная цель — Node.js 18 или новее.
@@ -205,8 +244,9 @@ Makefile вызывает тот же Node.js CLI и не содержит от�
 
 ## Границы защиты
 
-Обфускация может усложнить чтение собранного JavaScript, но не является
-шифрованием и не гарантирует секретность. Пользователь браузера в конечном итоге
+JavaScript получает консервативную минификацию и базовую обфускацию, но не
+сильную защиту. Минификация, компиляция TypeScript и хеширование имён не являются
+границей безопасности. Пользователь браузера
 может исследовать любой переданный ему код или данные. Никогда не помещайте
 секреты во frontend-код.
 
@@ -219,8 +259,8 @@ Content hash прежде всего нужен для управления ке
   рабочего каталога.
 - **Не найден локальный inline-ресурс** — сборка завершится, а ссылка попадёт в
   `warnings`.
-- **`Invalid obfuscator.json`** — проверьте синтаксис JSON и поддержку параметров
-  установленной версией `javascript-obfuscator`.
+- **Не установлен TypeScript peer** — выполните
+  `npm install --save-dev typescript`.
 - **Не работает `require()`** — пакет использует ESM; применяйте `import` и
   `await`.
 

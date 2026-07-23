@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Packed TypeScript SPA</title>
+    <link rel="stylesheet" href="./css/app.css">
+  </head>
+  <body>
+    <main class="app">
+      <img data-testid="logo" src="./assets/logo.svg" alt="Test application">
+      <output data-testid="count">0</output>
+      <button data-testid="increment" type="button">Increment</button>
+      <form data-testid="profile-form">
+        <label>
+          Name
+          <input data-testid="name" required>
+        </label>
+        <button data-testid="save" type="submit">Save</button>
+      </form>
+      <p data-testid="saved-name"></p>
+      <ul data-testid="tasks"></ul>
+      <p data-testid="feature">Feature pending</p>
+    </main>
+    <script type="module" src="./ts/app.js"></script>
+  </body>
+</html>

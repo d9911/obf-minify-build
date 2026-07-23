@@ -4,6 +4,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { createFixture, projectRoot } from './helpers/project.js';
+import {
+  createPackedConsumer,
+  runConsumer,
+} from './helpers/packed-consumer.js';
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -17,6 +21,17 @@ function run(command, args, options = {}) {
   );
   return result;
 }
+
+test('package metadata guarantees zero runtime dependencies', async () => {
+  const metadata = JSON.parse(
+    await readFile(path.join(projectRoot, 'package.json'), 'utf8'),
+  );
+
+  assert.deepEqual(metadata.dependencies ?? {}, {});
+  assert.equal(metadata.peerDependencies?.typescript, '>=5.0.0');
+  assert.equal(metadata.peerDependenciesMeta?.typescript?.optional, true);
+  assert.equal(metadata.version, '0.0.4-rc.4');
+});
 
 test('packed package installs and works in an empty consumer project', async t => {
   const { root } = await createFixture(t);
@@ -48,6 +63,7 @@ test('packed package installs and works in an empty consumer project', async t =
   assert.ok(packedPaths.includes('docs/TROUBLESHOOTING.md'));
   assert.ok(packedPaths.includes('lib/index.js'));
   assert.ok(packedPaths.includes('bin/cli.js'));
+  assert.ok(packedPaths.includes('obfuscator.json'));
   assert.ok(!packedPaths.some(file => file.startsWith('test/')));
   assert.ok(!packedPaths.some(file => file.startsWith('scripts/')));
 
@@ -65,20 +81,28 @@ test('packed package installs and works in an empty consumer project', async t =
   const tarball = path.join(packDirectory, pack.filename);
   run(
     npm,
-    ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball],
+    [
+      'install',
+      '--ignore-scripts',
+      '--no-audit',
+      '--no-fund',
+      '--offline',
+      '--omit=optional',
+      tarball,
+    ],
     { cwd: consumer, env },
   );
   const consumerLock = JSON.parse(
     await readFile(path.join(consumer, 'package-lock.json'), 'utf8'),
   );
-  const minimatchPatch = Number(
-    consumerLock.packages['node_modules/minimatch'].version.split('.')[2],
+  const installedMetadata = JSON.parse(
+    await readFile(
+      path.join(consumer, 'node_modules', 'obf-minify-build', 'package.json'),
+      'utf8',
+    ),
   );
-  assert.ok(minimatchPatch >= 4);
-  assert.equal(
-    consumerLock.packages['node_modules/brace-expansion'].version,
-    '1.1.16',
-  );
+  assert.deepEqual(installedMetadata.dependencies ?? {}, {});
+  assert.equal(consumerLock.packages['node_modules/typescript'], undefined);
 
   const cli = path.join(
     consumer,
@@ -113,4 +137,65 @@ test('packed package installs and works in an empty consumer project', async t =
 
   const builtHtml = await readFile(path.join(consumer, 'dist', 'index.html'), 'utf8');
   assert.match(builtHtml, /app\.[a-f0-9]{8}\.css/);
+});
+
+test('packed package builds JavaScript without installing TypeScript', async t => {
+  const { src: fixture } = await createFixture(t, {
+    'package.json': JSON.stringify({
+      name: 'javascript-only-consumer',
+      private: true,
+      type: 'module',
+    }),
+    'src/index.html': '<script type="module" src="./app.js"></script>',
+    'src/app.js': 'document.body.dataset.ready = "true";',
+  });
+  const consumer = await createPackedConsumer(t, fixture);
+  const installedMetadata = JSON.parse(
+    await readFile(
+      path.join(
+        consumer.root,
+        'node_modules',
+        'obf-minify-build',
+        'package.json',
+      ),
+      'utf8',
+    ),
+  );
+  const consumerLock = JSON.parse(
+    await readFile(path.join(consumer.root, 'package-lock.json'), 'utf8'),
+  );
+
+  assert.deepEqual(installedMetadata.dependencies ?? {}, {});
+  assert.equal(consumerLock.packages['node_modules/typescript'], undefined);
+
+  const result = runConsumer(
+    consumer.cli,
+    ['--src', 'src', '--out', 'dist'],
+    { cwd: consumer.root, env: consumer.env },
+  );
+  assert.match(result.stdout, /Build complete/);
+});
+
+test('packed package explains how to install TypeScript when it is missing', async t => {
+  const { src: fixture } = await createFixture(t, {
+    'package.json': JSON.stringify({
+      name: 'missing-typescript-consumer',
+      private: true,
+      type: 'module',
+    }),
+    'src/app.ts': 'const answer: number = 42;',
+  });
+  const consumer = await createPackedConsumer(t, fixture);
+  const result = runConsumer(
+    consumer.cli,
+    ['--src', 'src', '--out', 'dist'],
+    {
+      allowFailure: true,
+      cwd: consumer.root,
+      env: consumer.env,
+    },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /npm install --save-dev typescript/);
 });

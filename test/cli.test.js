@@ -28,7 +28,7 @@ test('version prints the package version', () => {
   const result = runCli(['--version'], { cwd: '/tmp' });
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /^0\.0\.4-rc\.3\s*$/);
+  assert.match(result.stdout, /^0\.0\.4-rc\.4\s*$/);
   assert.equal(result.stderr, '');
 });
 
@@ -67,4 +67,15 @@ test('--no-make remains accepted as a deprecated no-op', async t => {
 
   assert.equal(result.status, 0);
   assert.match(result.stderr, /--no-make is deprecated/);
+});
+
+test('TypeScript CLI error explains how to install the optional peer', async t => {
+  const { root, src, out } = await createFixture(t, {
+    'app.ts': 'const answer: number = 42;',
+  });
+
+  const result = runCli(['--src', src, '--out', out], { cwd: root });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /npm install --save-dev typescript/);
 });

@@ -18,9 +18,9 @@ const result = await build(options);
 | `inlineJs`           | `boolean`  | `false`         | Inline local external scripts                      |
 | `inlineAll`          | `boolean`  | `false`         | Enable both inline modes                           |
 | `generateIndex`      | `boolean`  | `false`         | Create a basic English index when no HTML exists   |
-| `skipObfuscation`    | `boolean`  | `false`         | Preserve all JavaScript source                     |
-| `skipObfuscationFor` | `string[]` | `[]`            | Preserve matching JavaScript paths                 |
-| `cwd`                | `string`   | `process.cwd()` | Base for paths and `obfuscator.json`               |
+| `skipObfuscation`    | `boolean`  | `false`         | Deprecated compatibility option                    |
+| `skipObfuscationFor` | `string[]` | `[]`            | Deprecated compatibility option                    |
+| `cwd`                | `string`   | `process.cwd()` | Base for paths and optional peer resolution         |
 
 The result contains absolute directories, file counts, a source-to-output
 manifest, and non-fatal warnings. See the primary [README](../README.md) for the
@@ -37,9 +37,9 @@ The output directory is recreated after validation. The source is never modified
 ## Transform order
 
 1. Discover source files.
-2. Transform CSS and JavaScript.
-3. Optionally inline local CSS/JavaScript references.
-4. Minify HTML.
+2. Prefer `.ts` over matching `.js` and compile it to JavaScript.
+3. Conservatively transform HTML/CSS and preserve JavaScript.
+4. Optionally inline local CSS/JavaScript references.
 5. Write output.
 6. Hash emitted CSS, JavaScript, and supported images with SHA-256.
 7. Rename hashed files and rewrite local `src`/`href` references.
@@ -53,13 +53,18 @@ Relative paths are local. `http:`, `https:`, other URI schemes, `//`, `data:`,
 and fragment-only references are not opened as files. Missing local references
 requested for inlining remain in HTML and are reported in `result.warnings`.
 
+## TypeScript
+
+Install `typescript` as a dev dependency when `.ts` input is used. The compiler
+is resolved from `cwd`. `.ts` emits `.js`, while `.tsx`, declaration emission,
+project references, source maps, and full type checking are outside this release.
+
 ## `obfuscator.json`
 
-The engine reads this optional file from `cwd`. Invalid JSON stops the build with
-an actionable error. Options are passed to `javascript-obfuscator`; consult its
-upstream documentation for supported fields.
-
-Obfuscation is not encryption and is not a safe place for credentials.
+The native engine accepts four boolean keys: `compact`, `removeComments`,
+`encodeStrings`, and `renameLocals`. Unknown or legacy upstream options stop the
+build with an actionable error. Ambiguous JavaScript is emitted unchanged and
+reported through `result.warnings`.
 
 ## Make
 

@@ -1,0 +1,7 @@
+:root {
+  --accent: rgb(31, 95, 191);
+}
+
+[data-testid="increment"] {
+  color: var(--accent);
+}

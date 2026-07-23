@@ -13,8 +13,8 @@ Options:
   --inline-js                    Inline local scripts into HTML
   --inline-all                   Inline local stylesheets and scripts
   --generate-index               Generate index.html when no HTML exists
-  --skip-obfuscation             Do not obfuscate JavaScript
-  --skip-obfuscation-for <list>  Comma-separated path fragments to exclude
+  --skip-obfuscation             Deprecated compatibility option (no effect)
+  --skip-obfuscation-for <list>  Deprecated compatibility option (no effect)
   --no-make                      Deprecated compatibility option (no effect)
   --version, -v                  Show package version
   --help, -h                     Show this help

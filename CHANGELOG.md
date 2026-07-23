@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.0.4-rc.4] - 2026-07-23
+
+- Add automatic `.ts` to `.js` compilation through an optional TypeScript peer.
+- Prefer `.ts` when matching TypeScript and JavaScript sources both exist.
+- Remove all third-party production dependencies.
+- Replace dependency-backed transforms with conservative built-in transforms.
+- Add original JavaScript lexing, minification, string encoding, and
+  conservative local identifier renaming.
+- Restore a strict four-option `obfuscator.json` for the native engine.
+- Remove strong JavaScript obfuscation claims and document the security boundary.
+- Keep JavaScript-only builds functional without TypeScript.
+- Rewrite hashed static and dynamic ES-module references.
+- Rewrite hashed CSS `@import` and `url()` references.
+- Add a packed-tarball Chromium E2E test with a realistic Vanilla TypeScript SPA.
+- Verify JS-only and missing-TypeScript consumers from the packed artifact.
+
 ## [0.0.5] - Unreleased
 
 ### Planned stable changes
@@ -8,10 +24,10 @@
 - Support builds without required Make, `cpio`, or `find`.
 - Keep Make as an optional wrapper around the Node.js CLI.
 - Validate source/output paths before recreating output.
-- Minify HTML/CSS, obfuscate eligible JavaScript, hash assets, and rewrite local
+- Minify HTML/CSS, preserve JavaScript, hash assets, and rewrite local
   HTML references through one pipeline.
 - Add inline CSS/JavaScript support to the shared pipeline.
-- Move runtime libraries to package `dependencies`.
+- Keep the published package free of production dependencies.
 - Add clean-tarball consumer tests.
 - Publish matching English and Russian documentation.
 

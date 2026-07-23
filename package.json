@@ -1,7 +1,7 @@
 {
   "name": "obf-minify-build",
-  "version": "0.0.4-rc.3",
-  "description": "Cross-platform static frontend builds with minification, obfuscation, inlining, and hashed assets.",
+  "version": "0.0.4-rc.4",
+  "description": "Zero-runtime-dependency static frontend builds with optional TypeScript, minification, inlining, and hashed assets.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -16,7 +16,7 @@
   },
   "keywords": [
     "minify",
-    "obfuscate",
+    "typescript",
     "build",
     "html",
     "css",
@@ -53,31 +53,33 @@
     "Makefile",
     "obfuscator.json"
   ],
-  "dependencies": {
-    "clean-css": "^5.3.3",
-    "html-minifier-terser": "^7.2.0",
-    "javascript-obfuscator": "^5.4.3"
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
-    "autoprefixer": "^10.4.21",
-    "clean-css-cli": "^5.6.3",
-    "cssnano": "^7.1.0",
-    "eslint": "^9.32.0",
-    "glob": "^10.4.5",
-    "globals": "^16.3.0",
-    "htmlhint": "^1.6.3",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "glob": "^13.0.6",
+    "globals": "^17.7.0",
+    "htmlhint": "^1.9.2",
     "onchange": "^7.1.0",
-    "postcss-cli": "^11.0.1",
+    "playwright": "^1.61.1",
     "replace-in-file": "^8.3.0",
-    "stylelint": "^16.22.0",
-    "stylelint-config-standard": "^38.0.0"
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
+    "typescript": "^7.0.2"
   },
   "scripts": {
     "build": "node bin/cli.js",
     "dev": "onchange 'src/**/*' -- npm run build",
     "test": "node --test test/*.test.js",
     "test:cli": "node --test test/cli.test.js",
+    "test:e2e": "node --test test/e2e.test.js",
     "test:package": "node --test test/package.test.js",
     "lint": "eslint bin lib scripts test src/js && stylelint \"src/css/**/*.css\" && htmlhint src/html"
   },

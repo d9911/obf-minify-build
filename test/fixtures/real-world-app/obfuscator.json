@@ -1,0 +1,6 @@
+{
+  "compact": true,
+  "removeComments": true,
+  "encodeStrings": false,
+  "renameLocals": false
+}

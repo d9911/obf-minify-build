@@ -8,8 +8,7 @@ Install the package normally rather than copying `lib/` or `bin/` by hand:
 npm install --save-dev obf-minify-build
 ```
 
-Runtime libraries must be installed from the package's `dependencies`. The
-tarball consumer test checks this release requirement.
+The package has no production dependencies. Do not copy individual package files.
 
 ## `Source directory does not exist`
 
@@ -31,11 +30,13 @@ src/out
 out/src
 ```
 
-## Invalid `obfuscator.json`
+## TypeScript peer is missing
 
-Validate JSON syntax first. Then compare its options with the installed
-`javascript-obfuscator` version. Remove the file to test the conservative built-in
-configuration.
+Install TypeScript in the consuming project:
+
+```bash
+npm install --save-dev typescript
+```
 
 ## Missing inline resource
 
@@ -60,14 +61,10 @@ Use the CLI directly. Make is optional:
 npx obf-minify-build --src src --out build
 ```
 
-## Obfuscated code does not behave correctly
+## JavaScript is not obfuscated
 
-First disable obfuscation to isolate the cause:
+The native engine intentionally falls back to unchanged source when syntax or
+scope analysis is ambiguous. Inspect `result.warnings`. This behavior prevents a
+speculative transformation from breaking executable code.
 
-```bash
-npx obf-minify-build --skip-obfuscation
-```
-
-Then use `--skip-obfuscation-for` for incompatible vendor files or reduce
-aggressive options in `obfuscator.json`. Obfuscator behavior depends on the input
-program and selected upstream options.
+Basic string encoding and local-name replacement are not protection for secrets.

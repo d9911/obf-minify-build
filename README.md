@@ -1,8 +1,8 @@
 # obf-minify-build
 
 <p align="center">
-  Cross-platform static frontend builds with HTML/CSS minification,
-  JavaScript obfuscation, resource inlining, and content-hashed assets.
+  Zero-runtime-dependency static frontend builds with TypeScript support,
+  conservative HTML/CSS minification, inlining, and content-hashed assets.
 </p>
 
 <p align="center">
@@ -26,8 +26,10 @@ other resources into a deployable build:
 
 - one Node.js engine for the CLI and JavaScript API;
 - Windows, macOS, and Linux support without required shell utilities;
-- HTML and CSS minification;
-- configurable JavaScript obfuscation;
+- no third-party runtime dependencies;
+- conservative HTML and CSS minification;
+- native JavaScript minification and safe basic obfuscation;
+- optional TypeScript compilation with automatic `.ts` preference;
 - optional local CSS and JavaScript inlining;
 - content hashes in CSS, JavaScript, and image filenames;
 - rewritten local HTML references;
@@ -51,7 +53,7 @@ Before a new RC is published, maintainers can test the current checkout:
 
 ```bash
 npm pack
-npm install --save-dev ./obf-minify-build-0.0.4-rc.3.tgz
+npm install --save-dev ./obf-minify-build-0.0.4-rc.4.tgz
 ```
 
 ## Quick start
@@ -78,6 +80,19 @@ npx obf-minify-build --src src --out dist
 The build is written to `dist/`. Processed CSS, JavaScript, and supported images
 receive eight-character content hashes, and matching HTML references are updated.
 
+### Optional TypeScript
+
+Install TypeScript in projects that contain `.ts` input:
+
+```bash
+npm install --save-dev typescript
+```
+
+`js/app.ts` is compiled to `js/app.js`. If both `app.ts` and `app.js` exist,
+the `.ts` source wins. JavaScript-only projects do not need TypeScript. This
+release does not emit `.d.ts`, support `.tsx`, or replace full `tsc --noEmit`
+type checking.
+
 ## CLI
 
 ```text
@@ -90,8 +105,8 @@ Options:
   --inline-js                    Inline local scripts into HTML
   --inline-all                   Inline local stylesheets and scripts
   --generate-index               Generate index.html when no HTML exists
-  --skip-obfuscation             Do not obfuscate JavaScript
-  --skip-obfuscation-for <list>  Comma-separated path fragments to exclude
+  --skip-obfuscation             Deprecated compatibility option (no effect)
+  --skip-obfuscation-for <list>  Deprecated compatibility option (no effect)
   --no-make                      Deprecated compatibility option (no effect)
   --version, -v                  Show package version
   --help, -h                     Show help
@@ -109,8 +124,6 @@ npx obf-minify-build --src website --out public
 # Put local CSS and JavaScript inside each HTML document
 npx obf-minify-build --inline-all
 
-# Keep vendor files readable while obfuscating other JavaScript
-npx obf-minify-build --skip-obfuscation-for vendor.js,libs/
 ```
 
 Unknown options, missing option values, invalid paths, and build failures return
@@ -127,7 +140,6 @@ try {
   const result = await build({
     src: 'src',
     out: 'dist',
-    skipObfuscationFor: ['vendor.js'],
   });
 
   console.log(result.outputDir);
@@ -161,24 +173,31 @@ try {
 }
 ```
 
-## Obfuscator configuration
+## Dependency policy
 
-Create `obfuscator.json` in the directory where the build command runs. Its
-contents are passed to
-[`javascript-obfuscator`](https://github.com/javascript-obfuscator/javascript-obfuscator).
-Without this file, the package uses a conservative built-in configuration.
+The published package has no production `dependencies`. TypeScript is an
+optional peer and is loaded only when selected `.ts` files exist. Development
+linters and tests are not installed for package consumers.
+
+## Native transform configuration
+
+The transformation engine is original project code and does not copy or vendor
+the removed third-party processors. Create `obfuscator.json` in the working
+directory to override its defaults:
 
 ```json
 {
   "compact": true,
-  "controlFlowFlattening": false,
-  "deadCodeInjection": false,
-  "renameGlobals": false,
-  "selfDefending": false,
-  "stringArray": true,
-  "stringArrayThreshold": 0.75
+  "removeComments": true,
+  "encodeStrings": true,
+  "renameLocals": true
 }
 ```
+
+Only these boolean options are accepted. JavaScript strings and proven local
+bindings may be transformed. Globals, properties, module names, directives, and
+ambiguous syntax are preserved. When safety cannot be established, the original
+file is emitted with a warning.
 
 ## Optional Make wrapper
 
@@ -193,6 +212,25 @@ make clean
 The Makefile delegates to the same Node.js CLI; it does not contain a separate
 build implementation.
 
+## Real browser verification
+
+The development test suite installs the exact archive created by `npm pack`
+into an isolated consumer project. It builds a multi-module Vanilla TypeScript
+SPA and opens the generated output in Chromium:
+
+```bash
+# Install the browser once for local development
+npx playwright install chromium
+
+# Pack, install, build, serve, and exercise the SPA
+npm run test:e2e
+```
+
+The test checks static and dynamic ES-module imports, CSS `@import` and `url()`,
+hashed images, JSON loading, DOM events, `localStorage`, HTTP responses,
+uncaught page errors, and browser console errors. Playwright is a development
+dependency and is not a runtime dependency of the published package.
+
 ## Requirements and verified support
 
 - Node.js 18 or newer is the declared target.
@@ -205,10 +243,11 @@ verified until its automated tests pass.
 
 ## Security scope
 
-Obfuscation can raise the effort required to read generated JavaScript, but it is
-not encryption and cannot guarantee secrecy. Any code, credentials, or data sent
-to a browser can ultimately be inspected by the user. Never place secrets in
-frontend source code.
+JavaScript receives conservative native minification and basic obfuscation, not
+strong protection. Minification, TypeScript compilation, and filename hashing
+are not security boundaries. Any code,
+credentials, or data sent to a browser can ultimately be inspected by the user.
+Never place secrets in frontend source code.
 
 Content hashes are primarily cache-busting identifiers; they are not access
 control or tamper-proofing.
@@ -219,8 +258,8 @@ control or tamper-proofing.
   working directory.
 - **A local inline resource is missing** — the build finishes and reports the
   unresolved reference in `warnings`.
-- **`Invalid obfuscator.json`** — validate the file as JSON and confirm that its
-  options are supported by the installed `javascript-obfuscator`.
+- **TypeScript peer is not installed** — run
+  `npm install --save-dev typescript`.
 - **Using `require()` fails** — the package is ESM; use `import` and `await`.
 
 See the full [troubleshooting guide](./docs/TROUBLESHOOTING.md).

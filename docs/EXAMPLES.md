@@ -10,7 +10,8 @@
     "build:inline": "obf-minify-build --src src --out dist --inline-all"
   },
   "devDependencies": {
-    "obf-minify-build": "^0.0.5"
+    "obf-minify-build": "^0.0.5",
+    "typescript": "^7.0.2"
   }
 }
 ```
@@ -27,7 +28,6 @@ import { build } from 'obf-minify-build';
 const result = await build({
   src: 'website',
   out: 'public',
-  skipObfuscationFor: ['vendor/', '.min.js'],
 });
 
 console.log(`Created ${result.outputDir}`);
@@ -56,6 +56,22 @@ obf-minify-build --inline-all
 
 The matching local resources become `<style>` and inline `<script>` elements.
 Remote and data URLs remain external.
+
+When `js/app.ts` exists, it is compiled and used for the `js/app.js` reference.
+If the project contains only `js/app.js`, TypeScript is not required.
+
+## Native transform options
+
+```json
+{
+  "compact": true,
+  "removeComments": true,
+  "encodeStrings": true,
+  "renameLocals": true
+}
+```
+
+Save this as `obfuscator.json` beside the consuming project's `package.json`.
 
 ## Make wrapper
 

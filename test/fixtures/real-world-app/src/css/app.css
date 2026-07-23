@@ -1,0 +1,6 @@
+@import "./theme.css";
+
+.app {
+  min-height: 100vh;
+  background-image: url("../assets/grid.svg#grid");
+}
