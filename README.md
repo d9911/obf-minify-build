@@ -144,3 +144,10 @@ Documentation and API — see [docs/](./docs/) or source code.
 - [Examples](./docs/EXAMPLES.md) - Usage examples and best practices
 - [Testing](./docs/TESTING.md) - Complete testing guide
 - [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions
+
+
+
+
+## 📄 LICENSE
+
+[LICENSE](./LICENSE)

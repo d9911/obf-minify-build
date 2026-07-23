@@ -3,6 +3,29 @@ import path from 'path';
 import crypto from 'crypto';
 import { glob } from 'glob';
 import { replaceInFile } from 'replace-in-file';
+import JavaScriptObfuscator from 'javascript-obfuscator';
+
+function loadObfuscatorConfig() {
+	const configPath = path.join(process.cwd(), 'obfuscator.json');
+	if (!fs.existsSync(configPath)) return {};
+
+	return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+}
+
+function looksObfuscated(code) {
+	return /\b(?:const|let|var|function)\s+_0x[0-9a-f]+/i.test(code);
+}
+
+function obfuscateProtectionScript(file, config) {
+	if (path.basename(file) !== 'protection.js') return;
+
+	const code = fs.readFileSync(file, 'utf8');
+	if (looksObfuscated(code)) return;
+
+	const obfuscated = JavaScriptObfuscator.obfuscate(code, config).getObfuscatedCode();
+	fs.writeFileSync(file, obfuscated);
+	console.log(`- Обфусцирован перед хешированием: ${path.basename(file)}`);
+}
 
 async function main() {
 	const buildDir = process.argv[2];
@@ -15,12 +38,17 @@ async function main() {
 
 	const assetExts = ['.css', '.js', '.png', '.jpg', '.jpeg', '.svg', '.gif', '.webp'];
 	const assetFiles = glob.sync(`${buildDir}/**/*.{js,css,png,jpg,jpeg,svg,gif,webp}`);
+	const obfuscatorConfig = loadObfuscatorConfig();
 	const manifest = {};
 
 	// 1. Хешируем и переименовываем каждый ассет
 	assetFiles.forEach((file) => {
 		const fileExt = path.extname(file);
 		if (!assetExts.includes(fileExt)) return;
+
+		if (fileExt === '.js') {
+			obfuscateProtectionScript(file, obfuscatorConfig);
+		}
 
 		const fileBuffer = fs.readFileSync(file);
 		const hash = crypto.createHash('sha1').update(fileBuffer).digest('hex').slice(0, 8);
