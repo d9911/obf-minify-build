@@ -1,177 +1,73 @@
-# Troubleshooting Guide
+# Troubleshooting
 
-## Общие проблемы
+## `ERR_MODULE_NOT_FOUND`
 
-### 1. Ошибка "Makefile not found"
-
-**Проблема:** При использовании `npm run build` возникает ошибка о том, что Makefile не найден.
-
-**Решение:**
-```bash
-# Используйте Node.js сборку вместо Makefile
-npx obf-minify-build --no-make
-
-# Или установите необходимые инструменты
-# На macOS:
-brew install make
-
-# На Ubuntu/Debian:
-sudo apt-get install build-essential
-```
-
-### 2. Ошибка импорта glob
-
-**Проблема:** `SyntaxError: The requested module 'glob' does not provide an export named 'default'`
-
-**Решение:** Обновите код для использования нового API glob:
-```javascript
-// Старый способ (не работает в glob v11+)
-import glob from 'glob';
-
-// Новый способ
-import { globSync } from 'glob';
-```
-
-### 3. Ошибки конфигурации обфускатора
-
-**Проблема:** `debugProtectionInterval must not be less than 0`
-
-**Решение:** Проверьте файл `obfuscator.json`:
-```json
-{
-  "debugProtectionInterval": 2000,  // Должно быть число > 0
-  "stringArrayEncoding": ["base64"] // Должно быть массив
-}
-```
-
-### 4. Файлы не копируются
-
-**Проблема:** Некоторые файлы не попадают в сборку.
-
-**Решение:** 
-1. Проверьте, что файлы находятся в папке `src/`
-2. Убедитесь, что расширения файлов поддерживаются
-3. Проверьте Makefile на наличие нужных расширений
-
-### 5. CSS/JS не минифицируется
-
-**Проблема:** Файлы копируются, но не минифицируются.
-
-**Решение:**
-1. Проверьте, что файлы не в списке игнорируемых (`IGNORE_CSS`, `IGNORE_JS`)
-2. Убедитесь, что установлены все зависимости:
-   ```bash
-   npm install
-   ```
-
-## Проблемы с защитами
-
-### 1. Защиты не работают
-
-**Проблема:** Сайт не защищен от копирования или DevTools.
-
-**Решение:**
-1. Убедитесь, что подключены файлы защиты:
-   ```html
-   <link rel="stylesheet" href="../css/protection.css">
-   <script src="../js/protection.js"></script>
-   ```
-2. Добавьте класс `nocopy` к body:
-   ```html
-   <body class="nocopy">
-   ```
-
-### 2. Слишком агрессивные защиты
-
-**Проблема:** Защиты мешают нормальному использованию сайта.
-
-**Решение:** Отключите защиты в режиме разработки:
-```javascript
-const isDevMode = window.location.hostname === 'localhost';
-if (isDevMode) {
-  console.log('Защита отключена в режиме разработки.');
-  return;
-}
-```
-
-## Проблемы с хешированием
-
-### 1. Ссылки не обновляются
-
-**Проблема:** После хеширования ассетов ссылки в HTML не обновляются.
-
-**Решение:**
-1. Проверьте, что HTML файлы находятся в правильной структуре
-2. Убедитесь, что скрипт `hash-assets.js` выполняется
-3. Проверьте логи сборки на наличие ошибок
-
-### 2. Кеширование не работает
-
-**Проблема:** Браузер не обновляет файлы после изменений.
-
-**Решение:**
-1. Убедитесь, что хеширование работает корректно
-2. Проверьте настройки сервера для кеширования
-3. Используйте разные имена файлов для разных версий
-
-## Проблемы с производительностью
-
-### 1. Медленная сборка
-
-**Проблема:** Сборка занимает слишком много времени.
-
-**Решение:**
-1. Исключите ненужные файлы из обработки
-2. Используйте более быстрые настройки обфускации
-3. Рассмотрите использование кеширования
-
-### 2. Большой размер файлов
-
-**Проблема:** Обфусцированные файлы слишком большие.
-
-**Решение:**
-1. Настройте параметры обфускации в `obfuscator.json`
-2. Уменьшите `stringArrayThreshold`
-3. Отключите ненужные опции защиты
-
-## Отладка
-
-### Включение подробных логов
+Install the package normally rather than copying `lib/` or `bin/` by hand:
 
 ```bash
-# Для Makefile сборки
-make all VERBOSE=1
-
-# Для Node.js сборки
-DEBUG=* npx obf-minify-build --no-make
+npm install --save-dev obf-minify-build
 ```
 
-### Проверка конфигурации
+Runtime libraries must be installed from the package's `dependencies`. The
+tarball consumer test checks this release requirement.
+
+## `Source directory does not exist`
+
+`--src` is resolved from the current working directory:
 
 ```bash
-# Проверка структуры проекта
-tree src/
-
-# Проверка конфигурации обфускатора
-cat obfuscator.json | jq .
-
-# Проверка зависимостей
-npm list
+pwd
+npx obf-minify-build --src ./src --out ./dist
 ```
 
-### Тестирование сборки
+## Unsafe source/output error
+
+Choose separate, non-nested directories. These layouts are rejected to prevent
+recursive copying or accidental source deletion:
+
+```text
+src == out
+src/out
+out/src
+```
+
+## Invalid `obfuscator.json`
+
+Validate JSON syntax first. Then compare its options with the installed
+`javascript-obfuscator` version. Remove the file to test the conservative built-in
+configuration.
+
+## Missing inline resource
+
+Local missing CSS/JavaScript references are left in HTML and returned in
+`result.warnings`. Fix the path relative to the HTML file. Remote, protocol-
+relative, fragment, and data URLs are intentionally not opened locally.
+
+## CommonJS `require()` fails
+
+The package is ESM:
+
+```js
+import { build } from 'obf-minify-build';
+await build();
+```
+
+## Make is unavailable
+
+Use the CLI directly. Make is optional:
 
 ```bash
-# Тестовая сборка в отдельную папку
-npx obf-minify-build --src src --out test-build
-
-# Проверка результата
-ls -la test-build/
+npx obf-minify-build --src src --out build
 ```
 
-## Получение помощи
+## Obfuscated code does not behave correctly
 
-1. Проверьте [документацию](./README.md)
-2. Посмотрите [примеры](./EXAMPLES.md)
-3. Создайте issue в репозитории с подробным описанием проблемы
-4. Приложите логи сборки и конфигурационные файлы
+First disable obfuscation to isolate the cause:
+
+```bash
+npx obf-minify-build --skip-obfuscation
+```
+
+Then use `--skip-obfuscation-for` for incompatible vendor files or reduce
+aggressive options in `obfuscator.json`. Obfuscator behavior depends on the input
+program and selected upstream options.

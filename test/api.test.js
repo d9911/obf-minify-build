@@ -144,3 +144,20 @@ test('inline mode reports missing local references', async t => {
   assert.match(result.warnings[0], /missing\.css/);
   await access(path.join(out, 'index.html'));
 });
+
+test('root-relative references resolve from source root and preserve suffixes', async t => {
+  const { src, out } = await createFixture(t, {
+    'pages/index.html': `
+      <link rel="stylesheet" href="/styles/app.css?theme=dark#main">
+      <script src="/scripts/app.js"></script>`,
+    'styles/app.css': 'body { color: black; }',
+    'scripts/app.js': 'window.rootReference = true;',
+  });
+
+  const result = await build({ src, out });
+  const html = await readFile(path.join(out, 'pages', 'index.html'), 'utf8');
+
+  assert.match(html, /\/styles\/app\.[a-f0-9]{8}\.css\?theme=dark#main/);
+  assert.match(html, /\/scripts\/app\.[a-f0-9]{8}\.js/);
+  assert.equal(result.warnings.length, 0);
+});

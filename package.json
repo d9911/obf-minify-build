@@ -1,7 +1,7 @@
 {
   "name": "obf-minify-build",
   "version": "0.0.4-rc.3",
-  "description": "Автоматизированная сборка фронтенда с минификацией, обфускацией и защитами. CLI и API.",
+  "description": "Cross-platform static frontend builds with minification, obfuscation, inlining, and hashed assets.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -37,11 +37,16 @@
       "url": "https://t.me/d9911/"
     }
   ],
-  "license": "GPL-3.0-only-or-later",
+  "license": "GPL-3.0-only",
   "files": [
     "README.md",
     "README.ru.md",
+    "CHANGELOG.md",
     "LICENSE",
+    "docs/README.md",
+    "docs/EXAMPLES.md",
+    "docs/TESTING.md",
+    "docs/TROUBLESHOOTING.md",
     "lib/",
     "bin/",
     "config.mk",
@@ -51,7 +56,7 @@
   "dependencies": {
     "clean-css": "^5.3.3",
     "html-minifier-terser": "^7.2.0",
-    "javascript-obfuscator": "^4.1.1"
+    "javascript-obfuscator": "^5.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -71,7 +76,7 @@
   "scripts": {
     "build": "node bin/cli.js",
     "dev": "onchange 'src/**/*' -- npm run build",
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
     "test:cli": "node --test test/cli.test.js",
     "test:package": "node --test test/package.test.js",
     "lint": "eslint bin lib scripts test src/js && stylelint \"src/css/**/*.css\" && htmlhint src/html"

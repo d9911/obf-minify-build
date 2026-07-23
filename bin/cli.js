@@ -1,57 +1,106 @@
 #!/usr/bin/env node
-import { build } from '../lib/index.js';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 
-const args = process.argv.slice(2);
-const opts = {};
+const HELP = `Usage: obf-minify-build [options]
 
-// Parse arguments
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--src' && args[i+1]) opts.src = args[++i];
-  if (args[i] === '--out' && args[i+1]) opts.out = args[++i];
-  if (args[i] === '--no-make') opts.make = false;
-  if (args[i] === '--inline-css') opts.inlineCss = true;
-  if (args[i] === '--inline-js') opts.inlineJs = true;
-  if (args[i] === '--inline-all') opts.inlineAll = true;
-  if (args[i] === '--generate-index') opts.generateIndex = true;
-  if (args[i] === '--skip-obfuscation') opts.skipObfuscation = true;
-  if (args[i] === '--skip-obfuscation-for' && args[i+1]) {
-    opts.skipObfuscationFor = args[++i].split(',');
-  }
-  if (args[i] === '--help' || args[i] === '-h') {
-    console.log(`
-Usage: npx obf-minify-build [options]
+Build and protect a static frontend project with Node.js.
 
 Options:
   --src <dir>                    Source directory (default: src)
   --out <dir>                    Output directory (default: build)
-  --no-make                      Use Node.js build instead of Makefile
-  --inline-css                   Inline CSS files into HTML
-  --inline-js                    Inline JS files into HTML
-  --inline-all                   Inline all resources (CSS + JS)
-  --generate-index               Generate index.html if not found
-  --skip-obfuscation             Skip obfuscation completely
-  --skip-obfuscation-for <list>  Skip obfuscation for files (comma-separated)
+  --inline-css                   Inline local stylesheets into HTML
+  --inline-js                    Inline local scripts into HTML
+  --inline-all                   Inline local stylesheets and scripts
+  --generate-index               Generate index.html when no HTML exists
+  --skip-obfuscation             Do not obfuscate JavaScript
+  --skip-obfuscation-for <list>  Comma-separated path fragments to exclude
+  --no-make                      Deprecated compatibility option (no effect)
+  --version, -v                  Show package version
   --help, -h                     Show this help
 
 Examples:
   npx obf-minify-build
   npx obf-minify-build --src src --out dist
-  npx obf-minify-build --no-make
   npx obf-minify-build --inline-all --out dist
-  npx obf-minify-build --inline-css --inline-js
-  npx obf-minify-build --skip-obfuscation-for vendor,libs
-`);
-    process.exit(0);
+`;
+
+const VALUE_OPTIONS = new Map([
+  ['--src', 'src'],
+  ['--out', 'out'],
+  ['--skip-obfuscation-for', 'skipObfuscationFor'],
+]);
+
+const BOOLEAN_OPTIONS = new Map([
+  ['--inline-css', 'inlineCss'],
+  ['--inline-js', 'inlineJs'],
+  ['--inline-all', 'inlineAll'],
+  ['--generate-index', 'generateIndex'],
+  ['--skip-obfuscation', 'skipObfuscation'],
+]);
+
+async function packageVersion() {
+  const packagePath = fileURLToPath(new URL('../package.json', import.meta.url));
+  return JSON.parse(await readFile(packagePath, 'utf8')).version;
+}
+
+function parseArguments(args) {
+  const options = {};
+  let deprecatedNoMake = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+
+    if (VALUE_OPTIONS.has(argument)) {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error(`${argument} requires a value`);
+      }
+      const option = VALUE_OPTIONS.get(argument);
+      options[option] = option === 'skipObfuscationFor'
+        ? value.split(',').map(item => item.trim()).filter(Boolean)
+        : value;
+      index += 1;
+    } else if (BOOLEAN_OPTIONS.has(argument)) {
+      options[BOOLEAN_OPTIONS.get(argument)] = true;
+    } else if (argument === '--no-make') {
+      deprecatedNoMake = true;
+    } else {
+      throw new Error(`Unknown option: ${argument}`);
+    }
+  }
+
+  return { options, deprecatedNoMake };
+}
+
+async function main(args) {
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(HELP);
+    return;
+  }
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(await packageVersion());
+    return;
+  }
+
+  const { options, deprecatedNoMake } = parseArguments(args);
+  if (deprecatedNoMake) {
+    console.error('Warning: --no-make is deprecated; Node.js is always the build engine.');
+  }
+
+  const { build } = await import('../lib/index.js');
+  const result = await build(options);
+  const total = Object.values(result.files).reduce((sum, count) => sum + count, 0);
+  console.log(`Build complete: ${total} files → ${result.outputDir}`);
+
+  for (const warning of result.warnings) {
+    console.error(`Warning: ${warning}`);
   }
 }
 
 try {
-  // If custom src/out paths are provided, use Node.js build
-  if (opts.src || opts.out) {
-    opts.make = false;
-  }
-  build(opts);
+  await main(process.argv.slice(2));
 } catch (error) {
-  console.error('❌ Build failed:', error.message);
-  process.exit(1);
+  console.error(`Error: ${error.message}`);
+  process.exitCode = 1;
 }
