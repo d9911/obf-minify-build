@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">obf-minify-build</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#182132" />
+      <stop offset="1" stop-color="#080b12" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#90caf9" />
+      <stop offset="1" stop-color="#ce93d8" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <path d="M256 72 400 126v112c0 96-57 166-144 204-87-38-144-108-144-204V126z" fill="#111722" stroke="url(#accent)" stroke-width="20" />
+  <path d="m202 210-46 46 46 46M310 210l46 46-46 46M282 174l-52 164" fill="none" stroke="#e7edf7" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

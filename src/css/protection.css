@@ -18,3 +18,66 @@ a:focus {
     display: none !important;
   }
 }
+
+/* d9911 dark UI baseline: local, dependency-free, and motion-aware. */
+html {
+  background-color: #080b12;
+  color-scheme: dark;
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #080b12;
+  accent-color: #90caf9;
+}
+
+::selection {
+  background: rgba(144, 202, 249, 0.28);
+  color: #ffffff;
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid #90caf9;
+  outline-offset: 3px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #90caf9 #111722;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: #111722;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-width: 36px;
+  min-height: 36px;
+  border: 2px solid #111722;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #90caf9, #ce93d8);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #73e8f2, #c6a0ff);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

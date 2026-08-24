@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://obf-minify.d9911.org/sitemap.xml

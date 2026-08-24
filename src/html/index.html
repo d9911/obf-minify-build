@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>obf-minify-build Demo</title>
+    <title>obf-minify-build — демонстрация статической сборки</title>
     <link rel="stylesheet" href="../css/protection.css" />
     <style>
       body {
@@ -11,18 +11,19 @@
         line-height: 1.6;
         margin: 0;
         padding: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: radial-gradient(circle at 15% 0%, rgba(49, 99, 158, 0.3), transparent 42%), linear-gradient(145deg, #0d121c, #080b12 62%, #101521);
+        color: #e7edf7;
         min-height: 100vh;
       }
       .container {
         max-width: 800px;
         margin: 0 auto;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(17, 23, 34, 0.94);
         padding: 30px;
         border-radius: 15px;
         backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid #2d3a4f;
+        box-shadow: 0 28px 65px -36px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
       h1 {
         text-align: center;
@@ -31,7 +32,7 @@
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
       }
       .feature {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(24, 33, 50, 0.82);
         padding: 20px;
         margin: 15px 0;
         border-radius: 10px;
@@ -51,13 +52,48 @@
         font-family: 'Courier New', monospace;
       }
     </style>
+    <meta name="description" content="Демонстрация инструмента для минимизации, обфускации и сборки статических HTML, CSS и JavaScript." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#080b12" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="canonical" href="https://obf-minify.d9911.org/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="obf-minify-build — демонстрация статической сборки" />
+  <meta property="og:description" content="Демонстрация инструмента для минимизации, обфускации и сборки статических HTML, CSS и JavaScript." />
+  <meta property="og:url" content="https://obf-minify.d9911.org/" />
+  <meta property="og:image" content="https://obf-minify.d9911.org/assets/icons/icon-512.png" />
+  <meta property="og:image:alt" content="obf-minify-build logo" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="obf-minify-build — демонстрация статической сборки" />
+  <meta name="twitter:description" content="Демонстрация инструмента для минимизации, обфускации и сборки статических HTML, CSS и JavaScript." />
+  <meta name="twitter:image" content="https://obf-minify.d9911.org/assets/icons/icon-512.png" />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "obf-minify-build",
+      "url": "https://obf-minify.d9911.org/",
+      "description": "Демонстрация инструмента для минимизации, обфускации и сборки статических HTML, CSS и JavaScript.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "inLanguage": [
+        "ru"
+      ],
+      "isAccessibleForFree": true
+    }
+  </script>
   </head>
   <body class="nocopy">
-    <div class="container">
+    <main class="container" id="main-content">
       <h1>🛡️ obf-minify-build Demo</h1>
 
       <div class="feature">
-        <h3>✅ Активные защиты:</h3>
+        <h2>✅ Активные защиты:</h2>
         <ul>
           <li>Запрет выделения текста</li>
           <li>Блокировка контекстного меню</li>
@@ -70,7 +106,7 @@
       <div class="warning"><strong>⚠️ Внимание:</strong> Этот сайт защищен от инспекции. Попытка открыть DevTools может привести к блокировке контента.</div>
 
       <div class="feature">
-        <h3>🔧 Возможности obf-minify-build:</h3>
+        <h2>🔧 Возможности obf-minify-build:</h2>
         <ul>
           <li>Автоматическая минификация HTML, CSS, JS</li>
           <li>Обфускация JavaScript кода</li>
@@ -81,7 +117,7 @@
       </div>
 
       <div class="feature">
-        <h3>📁 Структура проекта:</h3>
+        <h2>📁 Структура проекта:</h2>
         <pre><code>src/
 ├── html/          # HTML файлы
 ├── css/           # CSS стили
@@ -91,14 +127,14 @@
       </div>
 
       <div class="feature">
-        <h3>🚀 Команды сборки:</h3>
+        <h2>🚀 Команды сборки:</h2>
         <ul>
           <li><code>npm run build</code> — полная сборка</li>
           <li><code>npm run dev</code> — пересборка при изменениях</li>
           <li><code>npm run start</code> — сборка и запуск сервера</li>
         </ul>
       </div>
-    </div>
+    </main>
 
     <script src="../js/protection.js"></script>
     <script>
